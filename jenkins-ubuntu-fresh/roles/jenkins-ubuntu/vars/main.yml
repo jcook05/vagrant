@@ -1,0 +1,55 @@
+---
+# Used for system updates and provisioning
+# If using Ansible pull set to true will cause services to restart
+pull: false
+# If using provision will update binaries set to false by default in ansible pull
+system: true
+## Packer version
+#<a href="https://releases.hashicorp.com/packer/0.10.1/packer_0.10.1_linux_amd64.zip">64-bit</a>
+packerfile: packer_1.0.0_linux_amd64.zip
+
+## Dotnet links:
+## Current 1.1.0 as of 11/17/2016
+# https://go.microsoft.com/fwlink/?LinkID=835019
+## LTS 1.0.1 as of 11/17/2016
+#https://go.microsoft.com/fwlink/?LinkID=827529
+
+netcorelink:  https://go.microsoft.com/fwlink/?LinkID=835019
+## .Net Core
+## https://www.microsoft.com/net/core#centos
+
+#netcorefile: dotnet-dev-centos-x64.1.0.0-preview2-1-003177.tar.gz
+
+netcorefile: dotnet-dev-centos-x64.1.0.4.tar.gz
+
+# https://wiki.jenkins-ci.org/display/JENKINS/Swarm+Plugin
+# swarm_url: https://jenkins.ci.cloudbees.com/job/plugins/job/swarm-plugin/16/org.jenkins-ci.plugins$swarm-client/artifact/org.jenkins-ci.plugins/swarm-client/1.11-SNAPSHOT/swarm-client-1.11-SNAPSHOT-jar-with-dependencies.jar
+
+swarm_url: https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/2.2/swarm-client-2.2-jar-with-dependencies.jar
+
+# http://maven.apache.org/download.cgi
+mvn_url: http://mirror.stjschools.org/public/apache/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
+
+# https://github.com/coreos/etcd/releases/
+
+etcd_url: https://github.com/coreos/etcd/releases/download/v3.0.9/etcd-v3.0.9-linux-amd64.tar.gz
+
+
+
+libicu_url:  http://security.ubuntu.com/ubuntu/pool/main/i/icu/libicu52_52.1-3ubuntu0.6_amd64.deb
+
+libicufile: libicu52_52.1-3ubuntu0.6_amd64.deb
+
+# https://getcomposer.org/download/
+
+composer_url: https://getcomposer.org/composer.phar
+
+terraformfile: terraform_0.7.4_linux_amd64.zip
+
+## Currently using the latest LTS Jenkins Yum Release:  http://pkg.jenkins-ci.org/redhat-stable/ 
+
+jenkinsfile: https://pkg.jenkins.io/debian-stable/binary/jenkins_2.60.2_all.deb
+
+kubectlfile: https://storage.googleapis.com/kubernetes-release/release/v1.4.4/bin/linux/amd64/kubectl
+
+kopsfile: https://github.com/kubernetes/kops/releases/download/v1.4.3/kops-linux-amd64

@@ -1,0 +1,281 @@
+---
+
+# Create Jenkins group needed since not installing Jenkins 
+- name: Jenkins shell Group
+  group: name=jenkins gid=4949 state=present
+
+# Create Jenkins User
+- name: Jenkins shell User
+  user: name=jenkins comment="Jenkins Continuous Build server" home=/var/lib/jenkins shell=/bin/bash uid=2222 group=jenkins groups=jenkins state=present
+
+
+- name: Install Packages
+  apt: name={{item}} state=latest
+  ignore_errors: True
+  with_items:
+    - git
+    - unzip
+    - python-setuptools
+    - python-dev
+    - build-essential
+    - python-pip
+    - openssl
+    - mini-httpd
+    - nginx
+    - memcached
+    - lftp
+    - asciidoc
+    - ansible
+    - docker.io
+    - libunwind8
+
+    
+
+- name: Install Additional Development tools. 
+  apt: name={{item}} state=latest 
+  ignore_errors: True
+  with_items:
+    - php
+    - php-cli
+    - php-mysql
+    - php-pdo
+    - php-gd
+    - php-imap
+    - php-mbstring
+    - autoconf
+    - automake
+    - nodejs-legacy
+    - npm
+   
+
+- name: sudo yum remove java-1.7.0-openjdk
+  apt: name={{item}} state=removed 
+  with_items:
+    - java-1.7.0-openjdk
+
+
+- name: ensure required packages are installed for Java 8
+  apt: name={{item}} state=latest update_cache=yes
+  with_items:
+    - python-software-properties
+
+- name: Add Java repository to sources
+  action: apt_repository repo='ppa:webupd8team/java'
+
+- name: Autoaccept license for Java
+  action: shell echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+
+- name: Update APT package cache
+  action: apt update_cache=yes
+
+- name: Install Java 8
+  action: apt pkg=oracle-java8-installer state=latest install_recommends=yes
+
+- name: Set Java 8 Env
+  action: apt pkg=oracle-java8-set-default state=latest install_recommends=yes
+    
+
+- name:  Install boto3
+  command: pip install boto3
+
+- name:  Install cli53
+  command: pip install cli53
+
+
+- name: Start Docker
+  service: name=docker state=started
+
+- name: Add Docker to jenkins group
+  command: usermod -aG docker jenkins
+
+- name:  Update pip
+  command:  pip install --upgrade pip
+  
+- name: Create Jenkins Temp Dir
+  file: dest=/tmp/jenkins state=directory mode=0755 owner=root group=root
+
+- name: Create Jenkins .kube Dir for Kubernetes config
+  file: dest=/var/lib/jenkins/.kube state=directory mode=0755 owner=jenkins group=jenkins
+
+
+- name: Get Jenkins Key
+  get_url: url=https://pkg.jenkins.io/debian-stable/jenkins.io.key dest=/tmp/jenkins.io.key owner=root group=root mode=0644
+
+- apt_key:
+    file: /tmp/jenkins.io.key
+    state: present
+
+- name: Add Jenkins Repository
+  lineinfile:
+    dest:  /etc/apt/sources.list
+    line: deb https://pkg.jenkins.io/debian-stable binary/
+
+
+- name: Jenkins - install | Install Jenkins 2.0
+  apt: name=jenkins state=installed update_cache=yes
+
+
+- name: Jenkins - install | Start and enable Jenkins 2.0
+  service: name=jenkins state=started enabled=yes   
+
+
+- name: Set jenkins home owner
+  command: chown -R jenkins /var/lib/jenkins
+
+- name: npm disable self signed cert fail
+  command: npm config set ca=''
+
+- name: Upgrade npm
+  command: npm -g install npm@2.1.7
+
+
+
+- name: Install grunt-cli
+  command: npm install -g grunt-cli
+
+- name: Install bower
+  command: npm install -g bower
+
+- name: Install gulp
+  command: npm install -g gulp
+
+- name: Install yo
+  command: npm install -g yo 
+
+- name: Install aspn
+  command: npm install -g generator-aspnet
+
+## Composer
+- name: get composer
+  get_url: url={{composer_url}} dest=/usr/local/bin/composer owner=root group=root mode=0755
+
+- name: Get Terraform
+  get_url: url=https://releases.hashicorp.com/terraform/0.7.4/{{terraformfile}} dest=/tmp/{{terraformfile}} owner=root group=root mode=0644
+
+- name: Extract Packer
+  get_url: url=https://releases.hashicorp.com/packer/1.0.0/{{packerfile}} dest=/tmp/{{packerfile}} owner=root group=root mode=0644
+
+- name: Unarchive Terraform
+  unarchive: src=/tmp/{{terraformfile}} dest=/usr/bin remote_src=yes
+
+- name: Unarchive Packer
+  unarchive: src=/tmp/{{packerfile}} dest=/usr/bin remote_src=yes
+
+- name: Get kubectl
+  get_url: url={{kubectlfile}} dest=/usr/bin/kubectl owner=root group=root mode=0755
+
+- name: Get kops
+  get_url: url={{kopsfile}} dest=/usr/bin/kops owner=root group=root mode=0755
+
+
+## as of 9/12/2017 .Net Core 2.0 requires libicu52
+## See file name and link in /vars/main.yml
+
+#- name: Get .Net Core Dependencies
+#  get_url: url={{libicu_url}} dest=/tmp/{{libicufile}} owner=root group=root mode=064
+
+#- name: install libicu52
+#  command: dpkg -i /tmp/{{libicufile}}
+
+## Add Microsoft Key for .Net Core
+## from:  https://www.microsoft.com/net/core#linuxubuntu
+
+- name:  Get Microsoft Key
+  shell: curl -i https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft.gpg
+  
+- name:  Add Microsoft Key
+  command:  mv /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+
+
+
+#- name:  Add Microsoft Key
+#  apt_key:
+#    id: 473041FA
+#    url: https://packages.microsoft.com/keys/microsoft.asc
+#    keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
+
+
+- name: dotnetdev.list
+  file:  path=/etc/apt/sources.list.d/dotnetdev.list state=touch owner=root group=root mode=0755
+    
+
+
+- name: Add Microsoft Repository
+  lineinfile:
+    dest:  /etc/apt/sources.list.d/dotnetdev.list
+    line: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main
+
+
+- name: Install .Net Core 2.0
+  apt: name={{item}} state=latest update_cache=yes
+  with_items:
+    - dotnet-sdk-2.0.0
+
+ 
+#Linux Downloads here:  https://www.microsoft.com/net/download/linux
+#If using a specific version, may want to store in Cable Labs artifactory or elsewhere
+#- name: Get .Net Core
+#  get_url: url={{netcorelink}} dest=/tmp/{{netcorefile}} owner=root group=root mode=064
+
+#- name: Unlink dotnet
+#  file: src=/opt/dotnet/dotnet dest=/usr/bin/dotnet owner=root group=root state=absent  
+
+#- name: Remove /opt/dotnet
+#  file:  path=/opt/dotnet state=absent
+
+#- name: Make Directory /opt/dotnet
+#  file:  path=/opt/dotnet state=directory owner=jenkins group=jenkins
+
+#- name: Unarchive .Net Core
+#  unarchive: src=/tmp/{{netcorefile}} dest=/opt/dotnet remote_src=yes
+  
+#- name: Set dotnet permissions
+#  file:  path=/opt/dotnet owner=jenkins group=jenkins state=directory recurse=yes
+
+#- name: Link dotnet
+#  file: src=/opt/dotnet/dotnet dest=/usr/bin/dotnet owner=jenkins group=jenkins state=link
+
+- name: Create Packer ETC directory
+  file: dest=/etc/packer state=directory mode=0755 owner=root group=root
+
+- name: Create Swarm directory
+  file: dest=/usr/share/swarm/{{item}} state=directory mode=0755 owner=root group=root
+  with_items:
+    - lib
+    - bin
+    
+- name: Create Swarm Log directory
+  file: dest=/var/log/swarm state=directory mode=0755 owner=jenkins group=jenkins
+
+- name: Download Swarm Client
+  get_url: url={{swarm_url}} dest=/usr/share/swarm/lib/swarm-client.jar owner=root group=root mode=0644
+
+- name: Download Maven
+  get_url: url={{mvn_url}} dest=/tmp/mvn.tgz owner=root group=root mode=0644
+
+- name: Maven directory
+  file: path=/usr/local/apache-maven state=directory owner=root group=root mode=0755
+
+- name: Extract mvn
+  command: tar zxf /tmp/mvn.tgz --strip 1 -C /usr/local/apache-maven
+
+- name: Get etcd
+  get_url: url={{etcd_url}} dest=/tmp/etcd.tgz owner=root group=root mode=0644
+ 
+- name: unpack etcd
+  command: tar zxf /tmp/etcd.tgz --strip 1 -C /tmp
+
+- name: Move etcd
+  copy: src=/tmp/{{item}} dest=/usr/bin/{{item}} owner=root group=root mode=0755 remote_src=yes
+  with_items:
+   - etcd
+   - etcdctl
+
+   
+- name: Enable services
+  service: name={{ item }} enabled=yes state=stopped
+  with_items:
+    - nginx
+    - memcached
+
+

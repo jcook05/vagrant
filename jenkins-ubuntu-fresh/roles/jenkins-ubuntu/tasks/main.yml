@@ -1,0 +1,4 @@
+---
+- include: system.yml
+  when: system
+- include: config.yml

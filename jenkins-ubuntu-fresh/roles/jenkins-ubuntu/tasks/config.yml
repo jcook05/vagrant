@@ -1,0 +1,28 @@
+---
+
+- name: Copy Nginx config
+  copy: src=etc/jenkins/{{item}} dest=/etc/nginx/{{item}} owner=root group=root mode=0644 force=yes
+  with_items:
+    - nginx.conf 
+
+- name: Restart Nginx
+  service: name=nginx state=restarted   
+
+- name: Restart Memcached
+  service: name=memcached state=restarted   
+
+- name: Swarm init.d
+  template: src=etc/init.d/swarm dest=/etc/init.d/swarm owner=root group=root mode=0755 
+
+- name: Create Swarm Config Directory
+  file: dest=/etc/sysconfig state=directory mode=0755 owner=root group=root
+
+- name: Swarm sysconfig
+  template: src=etc/sysconfig/swarm dest=/etc/sysconfig/swarm owner=root group=root mode=0644 
+
+- name: Maven path
+  template: src=etc/profile.d/jenkins.sh dest=/etc/profile.d/jenkins.sh mode=0644 owner=root group=root
+
+- name: NPM install doesnt delete /tmp on successful exit. Remove any folder starting with npm- in the /tmp folder
+  cron: name="NPM install cleanup" special_time=daily job="find /tmp/ -name 'npm-*' -type d -mmin +60 -exec rm -rf {} +" user="root" cron_file=01_npm_install_cleanup_daily
+

@@ -1,0 +1,14 @@
+#!/bin/bash
+name=LABEL-$(hostname)
+SWARM="java -jar -Xmx512m -XX:MaxPermSize=128m /usr/share/swarm/lib/swarm-client.jar"
+
+SWARM_OPTIONS=" -description LABEL \
+-disableSslVerification \
+-executors 1 \
+-fsroot /var/lib/jenkins \
+-master http://somejenkinsurl/ \
+-mode exclusive \
+-name $name \
+-labels LABEL \
+-password SWARM_PASSWORD \
+-username SWARM_USERNAME"
